@@ -1,0 +1,752 @@
+# Twitterverse
+Program that filters and searches through a list of twitter users depending on their names, usernames, and locations.
+"""
+#-- Description written by the "Introduction to Computer Programming" faculty --
+#-- at the University of Toronto, St. George campus --
+
+Type descriptions of Twitterverse and Query dictionaries
+(for use in docstrings)
+
+Twitterverse dictionary:  dict of {str: dict of {str: object}}
+    - each key is a username (a str)
+    - each value is a dict of {str: object} with items as follows:
+        - key "name", value represents a user's name (a str)
+        - key "location", value represents a user's location (a str)
+        - key "web", value represents a user's website (a str)
+        - key "bio", value represents a user's bio (a str)
+        - key "following", value represents all the usernames of users this 
+          user is following (a list of str)
+       
+Query dictionary: dict of {str: dict of {str: object}}
+   - key "search", value represents a search specification dictionary
+   - key "filter", value represents a filter specification dictionary
+   - key "present", value represents a presentation specification dictionary
+
+Search specification dictionary: dict of {str: object}
+   - key "username", value represents the username to begin search at (a str)
+   - key "operations", value represents the operations to perform (a list of str)
+
+Filter specification dictionary: dict of {str: str}
+   - key "following" might exist, value represents a username (a str)
+   - key "follower" might exist, value represents a username (a str)
+   - key "name-includes" might exist, value represents a str to match (a case-insensitive match)
+   - key "location-includes" might exist, value represents a str to match (a case-insensitive match)
+
+Presentation specification dictionary: dict of {str: str}
+   - key "sort-by", value represents how to sort results (a str)
+   - key "format", value represents how to format results (a str)
+       
+"""
+
+# --- Code written by Lana EL Sanyoura ---
+
+# --- Twitter Dictionary Helper Function ---
+def read_user_data(file):
+    """(file open for reading) -> dict of {str : object}
+    
+    Return one user's data, from file, in the form of a dictionary. 
+    """  
+    # One user's information
+    user_dict = {'name': '', 'location': '', 'web': '', 'bio': '',
+                'following': []}     
+    # Name
+    user_dict['name'] = (file.readline()).strip('\n') 
+    
+    # Location
+    user_dict['location'] = (file.readline()).strip('\n') 
+    
+    # Web
+    user_dict['web'] = (file.readline()).strip('\n') 
+    
+    # Bio
+    bio_line = file.readline() 
+    while bio_line != 'ENDBIO\n':
+        user_dict['bio'] += bio_line 
+        bio_line = file.readline()         
+    user_dict['bio'] = user_dict['bio'].strip('\n')
+    
+    # Following 
+    following_line = (file.readline()).strip('\n')        
+    while following_line != 'END':         
+        user_dict['following'].append(following_line.strip('\n'))
+        following_line = (file.readline()).strip('\n')
+    
+    return user_dict # file.readline() is currently at the line, 'END'
+
+def process_data(file):
+    """(file open for reading) -> Twitterverse dictionary 
+    
+    Return the data from file in the form of the Twitterverse dictionary.
+    """
+    twitter_dict = {}
+    
+    # First username in file
+    username = (file.readline()).strip('\n')
+    
+    while username != '':
+        
+        # Read the data of the current username
+        user_dict = read_user_data(file)
+        
+        # Add this user to Twitter dictionary 
+        twitter_dict[username] = user_dict   
+    
+        # Move to the next username 
+        username = (file.readline()).strip('\n')
+                   
+    return twitter_dict 
+
+# --- Query Dictionary Helper Functions ---
+def get_search_dict(file):
+    """(file open for reading) -> Search specification dictionary 
+    
+    Return the search speficifaction in the form of a dictionary. 
+    """
+    search_dict = {'username': '', 'operations': []}
+    search_line = (file.readline()).strip('\n') # 'SEARCH'
+    search_dict['username'] = (file.readline()).strip('\n') # Username  
+    
+    search_operation = (file.readline()).strip('\n') # First search operation    
+    while search_operation != 'FILTER':       
+        search_dict['operations'].append(search_operation)
+        search_operation = (file.readline()).strip('\n') 
+    return search_dict
+
+def get_filter_dict(file):
+    """(file open for reading) -> Filter specification dictionary 
+    
+    Return the filter speficifaction in the form of a dictionary. 
+    """ 
+    filter_dict = {}
+    
+    # First filter specification 
+    filter_specification = (file.readline()).strip('\n') 
+    
+    while filter_specification != 'PRESENT':
+        # Seperate the filter_specification into a list, [filter, specification]
+        filter_list = filter_specification.split() 
+        
+        filter_dict[filter_list[0]] = filter_list[1]
+        filter_specification = (file.readline()).strip('\n')    
+    return filter_dict
+
+def get_presentation_dict(file):
+    """ (file open for reading) -> Presentation specification dictionary 
+    
+    Return the present speficifaction in the form of a dictionary. 
+    """     
+    presentation_dict = {'sort-by': '','format': ''} 
+    
+    # Sort-by
+    sort_specification = ((file.readline()).strip('\n') ).split()    
+    presentation_dict['sort-by'] = sort_specification[1]   
+    
+    # Format 
+    format_specification = ((file.readline()).strip('\n') ).split()
+    presentation_dict['format'] = format_specification[1]
+    
+    return presentation_dict
+
+def process_query(file):
+    """(file open for reading) -> query dictionary
+    
+    Return the query from file in the query dictionary format.
+    """
+    # Create query dictionary 
+    query_dict = {'search': get_search_dict(file), \
+                  'filter': get_filter_dict(file) , \
+                  'present': get_presentation_dict(file)} 
+                           
+    return query_dict 
+     
+def all_followers(twitter_dict, being_followed):
+    """(Twitterverse dictionary, str) -> list of str
+    
+    Precondition: being_followed not in 
+    twitter_dict[being_followed]['following']
+    
+    Return a list of the users following being_followed, based on the data in 
+    twitter_dict.. 
+    
+    >>> followers = all_followers({'a': {'name': '', 'bio': '', \
+    'location': '','web': '', 'following': ['b','c','d']}, \
+    'b': {'name': '', 'bio': '', \
+    'location': '','web': '', 'following': ['a', 'c', 'd']}, \
+    'c': {'name': '', 'bio': '', \
+    'location': '','web': '','following': ['a', 'b', 'd']}, \
+    'd': {'name': '', 'bio': '', 'location': '','web': '', \
+    'following': ['a', 'b', 'c']}, 'e': {'name': '', 'bio': '', \
+    'location': '','web': '', 'following': ['a', 'b', 'c', 'd']}}, 'e')
+    >>> followers.sort()
+    >>> followers
+    []
+      
+    >>> followers = all_followers({'whitney12': {'name': '', 'bio': '', \
+    'location': '','web': '', 'following': ['tomCruise', 'katieH']}, \
+    'tomCruise': {'name': '','bio': '','location': 'Los Angeles, CA','web':'', \
+    'following': ['katieH', 'NicoleKidman']}, 'katieH': {'name': '', \
+    'bio': '','location': '', 'web': '', 'following': []}, \
+    'NicoleKidman': {'name': '', 'bio': '', 'location': '', \
+    'web': '','following': ['katieH']}},'katieH')
+    >>> followers.sort()
+    >>> followers
+    ['NicoleKidman', 'tomCruise', 'whitney12']
+    """
+    
+    # Create list of followers, followers
+    followers = []    
+    # Loop through the usernames in twitter_dict 
+    for username in twitter_dict:
+        if (being_followed in twitter_dict[username]['following']):
+            followers.append(username)           
+    return followers  
+    
+# --- Search Results Helper Functions ---
+def get_search_following(twitter_dict, searched_list):
+    """(Twitterverse dictionary, list of str) -> list of str
+   
+    Return a list of the usernames the users in searched_list are following,
+    based on the data in Twitterverse dictionary.
+    
+    >>> sorted(get_search_following({'whitney12': {'name': 'Whitney Blak', \
+    'bio': ' I Love life','location': 'Los Angeles, CA', \
+    'web': 'http//www.whitbla.com', 'following': ['tomCruise','katieH']}, \
+    'tomCruise': {'name': 'Tom Cruise', \
+    'bio': 'Official TomCruise.com crew tweets.\
+We love you guys!\\nVisit us at Facebook!', \
+    'location': 'Los Angeles, CA', 'web': 'http://www.tomcruise.com', \
+    'following': ['katieH', 'NicoleKidman']}, \
+    'katieH': {'name': 'Katie Hilt', \
+    'bio': '', 'location': 'Lebanon', \
+    'web': '', 'following': ['whitney12']}, \
+    'NicoleKidman': {'name': 'Nicole Kidman', \
+    'bio': '', 'location': 'Los Angeles, CA', \
+    'web': '', 'following': ['katieH']}}, ['tomCruise']))
+    ['NicoleKidman', 'katieH']
+    >>> sorted(get_search_following({'whitney12': {'name': 'Whitney Blak', \
+    'bio': ' I Love life','location': 'Los Angeles, CA', \
+    'web': 'http//www.whitbla.com', 'following': ['tomCruise','katieH']}, \
+    'tomCruise': {'name': 'Tom Cruise', \
+    'bio': 'Official TomCruise.com crew tweets.\
+We love you guys!\\nVisit us at Facebook!', \
+    'location': 'Los Angeles, CA', 'web': 'http://www.tomcruise.com', \
+    'following': ['katieH', 'NicoleKidman']}, \
+    'katieH': {'name': 'Katie Hilt', \
+    'bio': '', 'location': 'Lebanon', \
+    'web': '', 'following': ['whitney12']}, \
+    'NicoleKidman': {'name': 'Nicole Kidman', \
+    'bio': '', 'location': 'Los Angeles, CA', \
+    'web': '', 'following': ['katieH']}}, ['tomCruise', 'NicoleKidman', 'whitney12']))
+    ['NicoleKidman', 'katieH', 'tomCruise']
+    """    
+    new_list = []
+    # For each username in the list of users 
+    for username in searched_list:
+        # Get a list of all the people username is following
+        following = twitter_dict[username]['following']
+        for user in following:
+            if user not in new_list:  # No duplicates               
+                new_list.append(user) 
+    return new_list
+
+def get_search_followers(twitter_dict, searched_list):
+    """ (Twitterverse dictionary, list of str) -> list of str
+   
+    Return a list of all the followers of the users in searched_list, based on 
+    the data in Twitterverse dictionary.
+    
+    >>> sorted(get_search_followers({'whitney12': {'name': 'Whitney Blak', \
+    'bio': ' I Love life','location': 'Los Angeles, CA', \
+    'web': 'http//www.whitbla.com', 'following': ['tomCruise','katieH']}, \
+    'tomCruise': {'name': 'Tom Cruise', \
+    'bio': 'Official TomCruise.com crew tweets.\
+We love you guys!\\nVisit us at Facebook!', \
+    'location': 'Los Angeles, CA', 'web': 'http://www.tomcruise.com', \
+    'following': ['katieH', 'NicoleKidman']}, \
+    'katieH': {'name': 'Katie Hilt', \
+    'bio': '', 'location': 'Lebanon', \
+    'web': '', 'following': ['whitney12']}, \
+    'NicoleKidman': {'name': 'Nicole Kidman', \
+    'bio': '', 'location': 'Los Angeles, CA', \
+    'web': '', 'following': ['katieH']}}, ['katieH']))
+    ['NicoleKidman', 'tomCruise', 'whitney12']
+   
+    >>> sorted(get_search_followers({'whitney12': {'name': 'Whitney Blak', \
+    'bio': ' I Love life','location': 'Los Angeles, CA', \
+    'web': 'http//www.whitbla.com', 'following': ['tomCruise','katieH']}, \
+    'tomCruise': {'name': 'Tom Cruise', \
+    'bio': 'Official TomCruise.com crew tweets.\
+We love you guys!\\nVisit us at Facebook!', \
+    'location': 'Los Angeles, CA', 'web': 'http://www.tomcruise.com', \
+    'following': ['katieH', 'NicoleKidman']}, \
+    'katieH': {'name': 'Katie Hilt', \
+    'bio': '', 'location': 'Lebanon', \
+    'web': '', 'following': ['whitney12']}, \
+    'NicoleKidman': {'name': 'Nicole Kidman', \
+    'bio': '', 'location': 'Los Angeles, CA', \
+    'web': '', 'following': ['katieH']}}, ['tomCruise', 'NicoleKidman', 'whitney12']))
+    ['katieH', 'tomCruise', 'whitney12']
+    """ 
+    new_list = []
+    # Search for the user's followers 
+    for username in searched_list:
+        # Get a list of all the people following username
+        followers = all_followers(twitter_dict, username)
+        for user in followers:
+            if user not in new_list: # No duplicates 
+                new_list.append(user)
+    return new_list
+
+def get_search_results(twitter_dict, search_dict):
+    """(Twitterverse dictionary, search specification dictionary) -> dict of {str : object}
+    
+    Return a list of usernames from twitter_dict that match the search criteria
+    in search_dict.
+    
+    >>> sorted(get_search_results({'whitney12': {'name': 'Whitney Blak', \
+    'bio': ' I Love life','location': 'Los Angeles, CA', \
+    'web': 'http//www.whitbla.com', 'following': ['tomCruise','katieH']}, \
+    'tomCruise': {'name': 'Tom Cruise', \
+    'bio': 'Official TomCruise.com crew tweets.\
+We love you guys!\\nVisit us at Facebook!', \
+    'location': 'Los Angeles, CA', 'web': 'http://www.tomcruise.com', \
+    'following': ['katieH', 'NicoleKidman']}, \
+    'katieH': {'name': 'Katie Hilt', \
+    'bio': '', 'location': 'Lebanon', \
+    'web': '', 'following': ['whitney12']}, \
+    'NicoleKidman': {'name': 'Nicole Kidman', \
+    'bio': '', 'location': 'Los Angeles, CA', \
+    'web': '', 'following': ['tomCruise']}}, \
+    {'username': 'tomCruise', \
+    'operations': ['following', 'followers', 'followers']}))
+    ['NicoleKidman', 'katieH', 'whitney12']
+     
+    >>> sorted(get_search_results({'whitney12': {'name': 'Whitney Blak', \
+    'bio': ' I Love life','location': 'Los Angeles, CA', \
+    'web': 'http//www.whitbla.com', 'following': ['tomCruise','katieH']}, \
+    'tomCruise': {'name': 'Tom Cruise', \
+    'bio': 'Official TomCruise.com crew tweets. We love you guys!\\nVisit us\
+at Facebook!', 'location': 'Los Angeles, CA', \
+    'web': 'http://www.tomcruise.com', \
+    'following': ['katieH', 'NicoleKidman']}, \
+    'katieH': {'name': 'Katie Hilt', \
+    'bio': '', 'location': 'Lebanon', \
+    'web': '', 'following': ['whitney12']}, \
+    'NicoleKidman': {'name': 'Nicole Kidman', \
+    'bio': '', 'location': 'Los Angeles, CA', \
+    'web': '', 'following': ['katieH']}}, \
+    {'username': 'tomCruise',\
+    'operations': ['followers', 'following', 'followers']}))
+    ['NicoleKidman', 'tomCruise', 'whitney12']
+    """
+    # Don't modify the parameters
+    
+    # Check that the username is in twitter_dict         
+    if search_dict['username'] not in twitter_dict:
+        return []
+    
+    # The username is in twitter_dict    
+    searched_list = [search_dict['username']]    
+    operation_dict = {'following': get_search_following, \
+                       'followers': get_search_followers}
+    
+    # Modify searched_list by keeping the users that satisy the operations 
+    for operation in search_dict['operations']:
+        new_list = operation_dict[operation](twitter_dict, searched_list)
+        searched_list = new_list[:]
+        
+    # Return list final list of usernames (NO DUPLICATES) 
+    return searched_list
+
+# --- Filtering Helper Functions ---
+def get_filter_following(twitter_dict, filtered_usernames, subject):
+    """(Twitter dictionary, list of str, str) -> list of str
+    
+    Return a list of the usernames from filtered_usernames that are
+    following subject (i.e. are subject's followers), based on the data in
+    twitter_dict.
+
+    >>> sorted(get_filter_following({'whitney12': {'name': 'Whitney Blak', \
+       'bio': '', 'location': 'Los Angeles, CA', 'web': '', \
+       'following': ['tomCruise','katieH']}, \
+       'tomCruise': {'name': 'Tom Cruise', 'bio': '', 'location': 'Lebanon', \
+       'web': '', 'following': ['katieH', 'NicoleKidman']}, \
+       'katieH': {'name': 'Katie Hilt', 'bio': '', \
+       'location': 'Lebanon', 'web': '', 'following': ['whitney12']}, \
+       'NicoleKidman': {'name': 'Nicole Kidman', 'bio': '', \
+       'location': 'Los Angeles, CA', 'web': '', 'following': ['katieH']}}, \
+       ['whitney12', 'katieH', 'NicoleKidman'], 'whitney12'))
+    ['katieH']
+    
+    >>> sorted(get_filter_following({'whitney12': {'name': 'Whitney Blak', \
+       'bio': '', 'location': 'Los Angeles, CA', 'web': '', \
+       'following': ['tomCruise','katieH']}, \
+       'tomCruise': {'name': 'Tom Cruise', 'bio': '', 'location': 'Lebanon', \
+       'web': '', 'following': ['katieH', 'NicoleKidman']}, \
+       'katieH': {'name': 'Katie Hilt', 'bio': '', \
+       'location': 'Lebanon', 'web': '', 'following': ['whitney12']}, \
+       'NicoleKidman': {'name': 'Nicole Kidman', 'bio': '', \
+       'location': 'Los Angeles, CA', 'web': '', 'following': ['katieH']}}, \
+       ['whitney12', 'katieH', 'NicoleKidman'], 'Anonymous100'))
+    []
+    """
+    # Check that the subject is in twitter_dict         
+    if subject not in twitter_dict:
+        return []
+    
+    subject_followers = all_followers(twitter_dict, subject)
+    new_list = []    
+    for username in filtered_usernames:
+        # If username is following subject 
+        if (username not in new_list) and (username in subject_followers):
+            new_list.append(username)    
+    return new_list
+
+def get_filter_follower(twitter_dict, filtered_usernames, subject):
+    """(Twitter dictionary, list of str, str) -> list of str
+    
+    Return a list of the usernames from filtered_usernames that have subject as
+    their follower (i.e. subject is following them), based on the data in 
+    twitter_dict. 
+
+    >>> sorted(get_filter_follower({'whitney12': {'name': 'Whitney Blak', \
+       'bio': '', 'location': 'Los Angeles, CA', 'web': '', \
+       'following': ['tomCruise','katieH']}, \
+       'tomCruise': {'name': 'Tom Cruise', 'bio': '', 'location': 'Lebanon', \
+       'web': '', 'following': ['katieH', 'NicoleKidman']}, \
+       'katieH': {'name': 'Katie Hilt', 'bio': '', \
+       'location': 'Lebanon', 'web': '', 'following': ['whitney12']}, \
+       'NicoleKidman': {'name': 'Nicole Kidman', 'bio': '', \
+       'location': 'Los Angeles, CA', 'web': '', 'following': ['katieH']}}, \
+       ['whitney12', 'katieH', 'NicoleKidman'], 'katieH'))
+    ['whitney12']
+    
+    >>> sorted(get_filter_follower({'whitney12': {'name': 'Whitney Blak', \
+       'bio': '', 'location': 'Los Angeles, CA', 'web': '', \
+       'following': ['tomCruise','katieH']}, \
+       'tomCruise': {'name': 'Tom Cruise', 'bio': '', 'location': 'Lebanon', \
+       'web': '', 'following': ['katieH', 'NicoleKidman']}, \
+       'katieH': {'name': 'Katie Hilt', 'bio': '', \
+       'location': 'Lebanon', 'web': '', 'following': ['whitney12']}, \
+       'NicoleKidman': {'name': 'Nicole Kidman', 'bio': '', \
+       'location': 'Los Angeles, CA', 'web': '', 'following': ['katieH']}}, \
+       ['whitney12', 'katieH', 'NicoleKidman'], 'tomCruise'))
+    ['NicoleKidman', 'katieH']
+    """
+    # Check that the subject is in twitter_dict         
+    if subject not in twitter_dict:
+        return []
+    
+    subject_following = twitter_dict[subject]['following']
+    new_list = []
+    for username in filtered_usernames:
+        # If subject is following username 
+        if (username not in new_list) and (username in subject_following):
+            new_list.append(username)
+    return new_list
+
+def get_filter_location(twitter_dict, filtered_usernames, subject):
+    """(Twitter dictionary, list of str, str) -> list of str
+    
+    Return a list of the usernames from filtered_usernames that include subject
+    in their location, insensitive of case, based on the data in twitter_dict.
+
+    >>> sorted(get_filter_location({'whitney12': {'name': 'Whitney Blak', \
+       'bio': '', 'location': 'Los Angeles, CA', 'web': '', \
+       'following': ['tomCruise','katieH']}, \
+       'tomCruise': {'name': 'Tom Cruise', 'bio': '', 'location': 'Lebanon', \
+       'web': '', 'following': ['katieH', 'NicoleKidman']}, \
+       'katieH': {'name': 'Katie Hilt', 'bio': '', \
+       'location': 'Lebanon', 'web': '', 'following': ['whitney12']}, \
+       'NicoleKidman': {'name': 'Nicole Kidman', 'bio': '', \
+       'location': 'Los Angeles, CA', 'web': '', 'following': ['katieH']}}, \
+       ['whitney12', 'katieH', 'NicoleKidman'], 'Los Angeles'))
+    ['NicoleKidman', 'whitney12']
+    
+    >>> sorted(get_filter_location({'whitney12': {'name': 'Whitney Blak', \
+       'bio': '', 'location': 'Los Angeles, CA', 'web': '', \
+       'following': ['tomCruise','katieH']}, \
+       'tomCruise': {'name': 'Tom Cruise', 'bio': '', 'location': 'Lebanon', \
+       'web': '', 'following': ['katieH', 'NicoleKidman']}, \
+       'katieH': {'name': 'Katie Hilt', 'bio': '', \
+       'location': 'Lebanon', 'web': '', 'following': ['whitney12']}, \
+       'NicoleKidman': {'name': 'Nicole Kidman', 'bio': '', \
+       'location': 'Los Angeles, CA', 'web': '', 'following': ['katieH']}}, \
+       ['whitney12', 'katieH', 'NicoleKidman', 'tomCruise'], 'an'))
+    ['NicoleKidman', 'katieH', 'tomCruise', 'whitney12']
+    """
+    new_list = []
+    for username in filtered_usernames:
+        user_location = twitter_dict[username]['location']
+        if (username not in new_list) and \
+           (subject.lower() in user_location.lower()):
+            new_list.append(username)
+    return new_list 
+
+def get_filter_name(twitter_dict, filtered_usernames, subject):
+    """(Twitter dictionary, list of str, str) -> list of str
+    
+    Return a list of the usernames from filtered_usernames that include subject
+    in their name, insensitive of case, based on the data in twitter_dict.
+
+    >>> sorted(get_filter_name({'whitney12': {'name': 'Whitney Blak', \
+       'bio': '', 'location': 'Los Angeles, CA', 'web': '', \
+       'following': ['tomCruise','katieH']}, \
+       'tomCruise': {'name': 'Tom Cruise', 'bio': '', 'location': 'Lebanon', \
+       'web': '', 'following': ['katieH', 'NicoleKidman']}, \
+       'katieH': {'name': 'Katie Hilt', 'bio': '', \
+       'location': 'Lebanon', 'web': '', 'following': ['whitney12']}, \
+       'NicoleKidman': {'name': 'Nicole Kidman', 'bio': '', \
+       'location': 'Los Angeles, CA', 'web': '', 'following': ['katieH']}}, \
+       ['whitney12', 'katieH', 'NicoleKidman'], 'X'))
+    []
+    
+    >>> sorted(get_filter_name({'whitney12': {'name': 'Whitney Blak', \
+       'bio': '', 'location': 'Los Angeles, CA', 'web': '', \
+       'following': ['tomCruise','katieH']}, \
+       'tomCruise': {'name': 'Tom Cruise', 'bio': '', 'location': 'Lebanon', \
+       'web': '', 'following': ['katieH', 'NicoleKidman']}, \
+       'katieH': {'name': 'Katie Hilt', 'bio': '', \
+       'location': 'Lebanon', 'web': '', 'following': ['whitney12']}, \
+       'NicoleKidman': {'name': 'Nicole Kidman', 'bio': '', \
+       'location': 'Los Angeles, CA', 'web': '', 'following': ['katieH']}}, \
+       ['whitney12', 'katieH', 'NicoleKidman', 'tomCruise'], 'WHITNEY'))
+    ['whitney12']
+    """   
+    new_list = []
+    for username in filtered_usernames:
+        name = twitter_dict[username]['name']
+        if (username not in new_list) and \
+        (subject.lower() in name.lower()): 
+            new_list.append(username)
+    return new_list
+
+def get_filter_results(twitter_dict, searched_usernames, filter_dict):
+    """(Twitterverse dictionary, list of str, filter specification dictionary)\
+    -> list of str
+    
+    Return the list of usernames from searched_usernames that satisfy the 
+    specifications in filter_dict, based on the data in twitter_dict. 
+    
+    >>> sorted(get_filter_results({'whitney12': {'name': 'Whitney Blak', \
+       'bio': '','location': 'Los Angeles, CA', \
+       'web': '', 'following': ['tomCruise','katieH']}, \
+       'tomCruise': {'name': 'Tom Cruise', 'bio': '', \
+       'location': 'Los Angeles, CA', \
+       'web': '', 'following': ['katieH', 'NicoleKidman']}, \
+       'katieH': {'name': 'Katie Hilt', 'bio': '', 'location': 'Lebanon', \
+       'web': '', 'following': ['whitney12']},\
+       'NicoleKidman': {'name': 'Nicole Kidman', \
+       'bio': '', 'location': 'Los Angeles, CA', \
+       'web': '','following': ['katieH']}}, \
+       ['whitney12', 'tomCruise', 'NicoleKidman'], \
+       {'name-includes':'N'}))
+    ['NicoleKidman', 'whitney12']
+    
+    >>> sorted(get_filter_results({'whitney12': {'name': 'Whitney Blak', \
+       'bio': '', 'location': 'Los Angeles, CA', 'web': '', \
+       'following': ['tomCruise','katieH']}, \
+       'tomCruise': {'name': 'Tom Cruise', 'bio': '', 'location': 'Lebanon', \
+       'web': '', 'following': ['katieH', 'NicoleKidman']}, \
+       'katieH': {'name': 'Katie Hilt', 'bio': '', \
+       'location': 'Lebanon', 'web': '', 'following': ['whitney12']}, \
+       'NicoleKidman': {'name': 'Nicole Kidman', 'bio': '', \
+       'location': 'Los Angeles, CA', 'web': '', 'following': ['katieH']}}, \
+       ['whitney12', 'tomCruise', 'NicoleKidman'], \
+       {'following': 'katieH', 'location-includes': 'Los Angeles'}))
+    ['NicoleKidman', 'whitney12']
+    """
+    # Don't modify parameters 
+    
+    filtered_usernames = searched_usernames[:]
+    dict_of_operations = {'following': get_filter_following, \
+                          'follower': get_filter_follower, \
+                          'location-includes': get_filter_location, \
+                          'name-includes': get_filter_name}
+    # Loop through each key in filter_dict
+    for operation in filter_dict:
+        subject = filter_dict[operation]
+        new_list = dict_of_operations[operation](twitter_dict, \
+                                                 filtered_usernames, subject)    
+        filtered_usernames = new_list[:]            
+    return filtered_usernames
+    
+def get_present_string(twitter_dict, filtered_list, presentation_dict):
+    """ (Twitterverse dictionary, list of str,\
+    presentation specification dictionary) -> str
+    
+    Return the users form filtered_list after sorting them according to 
+    and formatting them as indicated by presentation dict, based on the data in
+    twitter_dict. 
+    
+    >>> twitter_dict = {'a': {'name': 'Zed', 'location': 'ON', \
+    'web': 'www.hello.ca', 'bio': 'Here I am!', 'following': ['c', 'd', 'b']}, \
+    'b': {'name': 'Lee', 'location': 'TO', 'web': 'www.lee.ca', \
+    'bio': 'I LOVE TWITTER\\nSo much!', 'following': ['a', 'd']}, \
+    'c': {'name': 'anna', 'location': 'MS', 'web': 'www.annotate.ca', \
+    'bio': 'Born and Raised in Minesota', 'following': ['d']}, \
+    'd': {'name': 'Dianna', 'location': 'LB', 'web': 'www.DIanna', \
+    'bio': "Just call'n me ANNA!", 'following': ['c', 'a', 'b']}} 
+    >>> filtered_list = ['b', 'c', 'd']
+    >>> presentation_dict = {'sort-by': 'popularity', 'format': 'long'}
+    >>> get_present_string(twitter_dict, filtered_list, presentation_dict)  
+    "----------\\nd\\nname: Dianna\\nlocation: LB\\nwebsite: www.DIanna\\n\
+bio:\\nJust call'n me ANNA!\\nfollowing: ['c', 'a', 'b']\\n----------\\nb\\n\
+name: Lee\\nlocation: TO\\nwebsite: www.lee.ca\\nbio:\\nI LOVE TWITTER\\nSo much!\
+\\nfollowing: ['a', 'd']\\n----------\\nc\\nname: anna\\nlocation: \
+MS\\nwebsite: www.annotate.ca\\nbio:\\nBorn and Raised in Minesota\\nfollowing: \
+['d']\\n----------\\n"
+
+    >>> twitter_dict = {'a': {'name': 'Zed', 'location': 'ON', \
+    'web': 'www.hello.ca', 'bio': 'Here I am!', 'following': ['c', 'd', 'b']}, \
+    'b': {'name': 'Lee', 'location': 'TO', 'web': 'www.lee.ca', \
+    'bio': 'I LOVE TWITTER\\nSo much!', 'following': ['a', 'd']}, \
+    'c': {'name': 'anna', 'location': 'MS', 'web': 'www.annotate.ca', \
+    'bio': 'Born and Raised in Minesota', 'following': ['d']}, \
+    'd': {'name': 'Dianna', 'location': 'LB', 'web': 'www.DIanna', \
+    'bio': "Just call'n me ANNA!", 'following': ['c', 'a', 'b']}} 
+    >>> filtered_list = ['b', 'a', 'd']
+    >>> presentation_dict = {'sort-by': 'name', 'format': 'short'}
+    >>> get_present_string(twitter_dict, filtered_list, presentation_dict)  
+    "['d', 'b', 'a']"
+    """
+    # Don't mutate parameters 
+    
+    # Sorting 
+    sorted_list = filtered_list[:]   
+    sorting_dict = {'username': username_first, 'name': name_first, \
+                    'popularity': more_popular}
+    sort_by_operation = presentation_dict['sort-by'] 
+    tweet_sort(twitter_dict, sorted_list, sorting_dict[sort_by_operation])
+    format_operation = presentation_dict['format']
+
+    # Presenting 
+    if sorted_list == []:
+        result = '-' * 10 + '\n' + '-' * 10 + '\n'
+        
+    # Append the username from filtered_list according to 
+    #presentation_dict['sort-by']
+    elif format_operation == 'short':
+        result = str(sorted_list)
+    elif format_operation == 'long':
+        result = ('-'*10) + '\n'
+        for username in sorted_list:
+            result += ('{0}\nname: {1}\nlocation: {2}\nwebsite: {3}\nbio:\n\
+{4}\nfollowing: {5}\n' + ('-'*10) + '\n').format(\
+                            username, twitter_dict[username]['name'],
+                            twitter_dict[username]['location'],
+                            twitter_dict[username]['web'], 
+                            twitter_dict[username]['bio'],
+                            twitter_dict[username]['following'])
+    return result   
+    
+#-- Code written by "Introduction to Computer Programming" faculty at the 
+# -- University of Toronto, St. George Campus --
+
+# --- Sorting Helper Functions ---
+def tweet_sort(twitter_data, results, cmp):
+    """ (Twitterverse dictionary, list of str, function) -> NoneType
+    
+    Sort the results list using the comparison function cmp and the data in 
+    twitter_data.
+    
+    >>> twitter_data = {\
+    'a':{'name':'Zed', 'location':'', 'web':'', 'bio':'', 'following':[]}, \
+    'b':{'name':'Lee', 'location':'', 'web':'', 'bio':'', 'following':[]}, \
+    'c':{'name':'anna', 'location':'', 'web':'', 'bio':'', 'following':[]}}
+    >>> result_list = ['c', 'a', 'b']
+    >>> tweet_sort(twitter_data, result_list, username_first)
+    >>> result_list
+    ['a', 'b', 'c']
+    >>> tweet_sort(twitter_data, result_list, name_first)
+    >>> result_list
+    ['b', 'a', 'c']
+    """
+    
+    # Insertion sort
+    for i in range(1, len(results)):
+        current = results[i]
+        position = i
+        while position > 0 and cmp(twitter_data, results[position - 1], current) > 0:
+            results[position] = results[position - 1]
+            position = position - 1 
+        results[position] = current  
+            
+def more_popular(twitter_data, a, b):
+    """ (Twitterverse dictionary, str, str) -> int
+    
+    Return -1 if user a has more followers than user b, 1 if fewer followers, 
+    and the result of sorting by username if they have the same, based on the 
+    data in twitter_data.
+    
+    >>> twitter_data = {\
+    'a':{'name':'', 'location':'', 'web':'', 'bio':'', 'following':['b']}, \
+    'b':{'name':'', 'location':'', 'web':'', 'bio':'', 'following':[]}, \
+    'c':{'name':'', 'location':'', 'web':'', 'bio':'', 'following':[]}}
+    >>> more_popular(twitter_data, 'a', 'b')
+    1
+    >>> more_popular(twitter_data, 'a', 'c')
+    -1
+    """
+    
+    a_popularity = len(all_followers(twitter_data, a)) 
+    b_popularity = len(all_followers(twitter_data, b))
+    if a_popularity > b_popularity:
+        return -1
+    if a_popularity < b_popularity:
+        return 1
+    return username_first(twitter_data, a, b)
+    
+def username_first(twitter_data, a, b):
+    """ (Twitterverse dictionary, str, str) -> int
+    
+    Return 1 if user a has a username that comes after user b's username 
+    alphabetically, -1 if user a's username comes before user b's username, 
+    and 0 if a tie, based on the data in twitter_data.
+    
+    >>> twitter_data = {\
+    'a':{'name':'', 'location':'', 'web':'', 'bio':'', 'following':['b']}, \
+    'b':{'name':'', 'location':'', 'web':'', 'bio':'', 'following':[]}, \
+    'c':{'name':'', 'location':'', 'web':'', 'bio':'', 'following':[]}}
+    >>> username_first(twitter_data, 'c', 'b')
+    1
+    >>> username_first(twitter_data, 'a', 'b')
+    -1
+    """
+    
+    if a < b:
+        return -1
+    if a > b:
+        return 1
+    return 0
+
+def name_first(twitter_data, a, b):
+    """ (Twitterverse dictionary, str, str) -> int
+        
+    Return 1 if user a's name comes after user b's name alphabetically, 
+    -1 if user a's name comes before user b's name, and the ordering of their
+    usernames if there is a tie, based on the data in twitter_data.
+    
+    >>> twitter_data = {\
+    'a':{'name':'Zed', 'location':'', 'web':'', 'bio':'', 'following':[]}, \
+    'b':{'name':'Lee', 'location':'', 'web':'', 'bio':'', 'following':[]}, \
+    'c':{'name':'anna', 'location':'', 'web':'', 'bio':'', 'following':[]}}
+    >>> name_first(twitter_data, 'c', 'b')
+    1
+    >>> name_first(twitter_data, 'b', 'a')
+    -1
+    """
+    
+    a_name = twitter_data[a]["name"]
+    b_name = twitter_data[b]["name"]
+    if a_name < b_name:
+        return -1
+    if a_name > b_name:
+        return 1
+    return username_first(twitter_data, a, b)       
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
+    
