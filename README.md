@@ -1,7 +1,8 @@
 # Twitterverse
 Program that filters and searches through a list of twitter users depending on their names, usernames, and locations.
 """
-#-- Description written by the "Introduction to Computer Programming" faculty --
+# This file has been written by Lana El Sanyoura with the help of started code written by faculty at the University of Toronto
+#-- The following description was written by the "Introduction to Computer Programming" faculty --
 #-- at the University of Toronto, St. George campus --
 
 Type descriptions of Twitterverse and Query dictionaries
