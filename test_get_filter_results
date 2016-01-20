@@ -1,0 +1,604 @@
+import unittest
+import twitterverse_functions as tf
+
+
+class TestGetFilterResults(unittest.TestCase):
+    '''Your unittests here'''
+    
+    def test_filter_no_operations(self):
+        """ Test get_filter_results with no filter specification. """
+    
+        twitter_dict = {'katieH': {'name': 'Katie Holmes', 'bio': '', \
+                        'following': [], 'web': 'www.tomkat.com', \
+                        'location': ''}, \
+                       'xavy': {'name': 'Xavier', 'bio': '', 'following': ['ZOYA'], \
+                             'web': 'www.xerox.com', 'location': 'Xerox Parc'},\
+                       'quin': {'name': 'Quincy Q', 'bio': '', \
+                             'following': ['NicoleKidman'], \
+                             'web': 'http://www.something.com', \
+                             'location': 'Port Coquitlam, BC'}, \
+                       'ZOYA': {'name': 'Zoya Zorich', 'bio': '', \
+                             'following': ['tomfan'], 'web': '', \
+                             'location': ''}, \
+                       'perty': {'name': 'Mme Clavell', \
+                             'bio': 'I love winter, snow and ice.', \
+                             'following': ['NicoleKidman'], \
+                             'web': '', 'location': 'Paris, France'}, \
+                       'tomfan': {'name': 'Chris Calderone', \
+                                  'bio':'Tom Cruise is the best actor in\
+                        Hollywood!', 'following': ['tomCruise'], 'web': '', \
+                                   'location': 'Houston, Texas'},\
+                       'NicoleKidman': {'name': 'Nicole Kidman', \
+                                   'location': 'Oz',\
+                                   'bio': "At my house celebrating Halloween!\
+                    I Know Haven't been on like \nyears So Sorry,Be safe And\
+                    have fun tonight",'following': [], 'web': ''}, \
+                       'tomCruise': {'name': 'Tom Cruise',\
+                                     'location': 'Los Angeles, CA',\
+                                     'bio': 'Official TomCruise.com crew\
+                        tweets, We love you guys! \nVisit us at Facebook!',\
+                                    'following': ['katieH', 'NicoleKidman'], \
+                                    'web': 'http://www.tomcruise.com'}}                                 
+    
+        searched_usernames = ['tomCruise', 'perty', 'quin']
+        filter_dict =  {}
+        actual = tf.get_filter_results(twitter_dict, searched_usernames,
+                                            filter_dict)
+        expected = ['tomCruise', 'perty', 'quin']      
+        self.assertEqual(actual, expected)
+        
+    def test_filter_following_operation(self):
+        """ Test get_filter_results with 'following' filter
+        specification. """
+        
+        twitter_dict = {'katieH': {'name': 'Katie Holmes', 'bio': '', \
+                        'following': [], 'web': 'www.tomkat.com', \
+                        'location': ''}, \
+                       'xavy': {'name': 'Xavier', 'bio': '', 'following': ['ZOYA'], \
+                             'web': 'www.xerox.com', 'location': 'Xerox Parc'},\
+                       'quin': {'name': 'Quincy Q', 'bio': '', \
+                             'following': ['NicoleKidman'], \
+                             'web': 'http://www.something.com', \
+                             'location': 'Port Coquitlam, BC'}, \
+                       'ZOYA': {'name': 'Zoya Zorich', 'bio': '', \
+                             'following': ['tomfan'], 'web': '', \
+                             'location': ''}, \
+                       'perty': {'name': 'Mme Clavell', \
+                             'bio': 'I love winter, snow and ice.', \
+                             'following': ['NicoleKidman'], \
+                             'web': '', 'location': 'Paris, France'}, \
+                       'tomfan': {'name': 'Chris Calderone', \
+                                  'bio':'Tom Cruise is the best actor in\
+                        Hollywood!', 'following': ['tomCruise'], \
+                                   'web': '', 'location': 'Houston, Texas'}, \
+                       'NicoleKidman': {'name': 'Nicole Kidman', \
+                                        'location': 'Oz', \
+                                        'bio': "At my house celebrating\
+                            Halloween! I Know Haven't been on\
+                            like \nyears So Sorry,Be safe And have fun tonight",
+                                        'following': [], 'web': ''},\
+                       'tomCruise': {'name': 'Tom Cruise', \
+                                      'location': 'Los Angeles, CA',\
+                                      'bio': 'Official' + \
+                                      'TomCruise.com crew tweets.\
+                            We love you guys! \nVisit us at Facebook!', \
+                                      'following': ['katieH', 'NicoleKidman'], \
+                                      'web': 'http://www.tomcruise.com'}}                                 
+        
+        searched_usernames = ['tomCruise', 'perty', 'quin']
+        filter_dict =  {'following': 'katieH'}
+        actual = tf.get_filter_results(twitter_dict, searched_usernames,
+                                       filter_dict)
+        expected = ['tomCruise']        
+        self.assertEqual(actual, expected) 
+        
+    def test_filter_follower_operation(self):
+        """ Test get_filter_results with 'follower' filter
+        specification. """
+        
+        twitter_dict = {'katieH': {'name': 'Katie Holmes', 'bio': '', \
+                        'following': [], 'web': 'www.tomkat.com', \
+                        'location': ''}, \
+                       'xavy': {'name': 'Xavier', 'bio': '', 'following': ['ZOYA'], \
+                             'web': 'www.xerox.com', 'location': 'Xerox Parc'},\
+                       'quin': {'name': 'Quincy Q', 'bio': '', \
+                             'following': ['NicoleKidman'], \
+                             'web': 'http://www.something.com', \
+                             'location': 'Port Coquitlam, BC'}, \
+                       'ZOYA': {'name': 'Zoya Zorich', 'bio': '', \
+                             'following': ['tomfan', 'perty'], 'web': '', \
+                             'location': ''}, \
+                       'perty': {'name': 'Mme Clavell', \
+                             'bio': 'I love winter, snow and ice.', \
+                             'following': ['NicoleKidman'], \
+                             'web': '', 'location': 'Paris, France'}, \
+                       'tomfan': {'name': 'Chris Calderone', \
+                                  'bio':'Tom Cruise is the best actor in\
+                               Hollywood!', 'following': ['tomCruise'], \
+                                   'web': '', 'location': 'Houston, Texas'}, \
+                       'NicoleKidman': {'name': 'Nicole Kidman', \
+                                        'location': 'Oz', \
+                                        'bio': "At my house celebrating\
+                            Halloween! I Know Haven't been on like \nyears\
+                            So Sorry,Be safe And have fun tonight",\
+                                        'following': [], 'web': ''},\
+                       'tomCruise': {'name': 'Tom Cruise', \
+                                      'location': 'Los Angeles, CA',\
+                                      'bio': 'Official TomCruise.com\
+                        crew tweets. We love you guys! \nVisit\
+                        us at Facebook!',\
+                                     'following':['katieH', 'NicoleKidman'], \
+                                      'web':'http://www.tomcruise.com'}}                                 
+        
+        searched_usernames = ['tomCruise', 'perty', 'quin']
+        filter_dict =  {'follower': 'ZOYA'}
+        actual = tf.get_filter_results(twitter_dict, searched_usernames,
+                                       filter_dict)
+        expected = ['perty']       
+        self.assertEqual(actual, expected)           
+
+    def test_filter_lower_case_letter_operation(self):
+        """ Test get_filter_results with 'name-includes' filter
+        specification and with only one capital letter. """
+        
+        twitter_dict = {'katieH': {'name': 'Katie Holmes', 'bio': '', \
+                        'following': [], 'web': 'www.tomkat.com', \
+                        'location': ''}, \
+                       'xavy': {'name': 'Xavier', 'bio': '', 'following': ['ZOYA'], \
+                             'web': 'www.xerox.com', 'location': 'Xerox Parc'},\
+                       'quin': {'name': 'Quincy Q', 'bio': '', \
+                             'following': ['NicoleKidman'], \
+                             'web': 'http://www.something.com', \
+                             'location': 'Port Coquitlam, BC'}, \
+                       'ZOYA': {'name': 'Zoya Zorich', 'bio': '', \
+                             'following': ['tomfan', 'perty'], 'web': '', \
+                             'location': ''}, \
+                       'perty': {'name': 'Mme Clavell', \
+                             'bio': 'I love winter, snow and ice.', \
+                             'following': ['NicoleKidman'], \
+                             'web': '', 'location': 'Paris, France'}, \
+                       'tomfan': {'name': 'Chris Calderone', \
+                                  'bio':'Tom Cruise is the best actor in\
+                            Hollywood!', 'following': ['tomCruise'], \
+                                   'web': '', 'location': 'Houston, Texas'}, \
+                       'NicoleKidman': {'name': 'Nicole Kidman', \
+                                        'location': 'Oz', \
+                                        'bio': "At my house celebrating\
+                            Halloween! I Know Haven't been on like \nyears So\
+                            Sorry,Be safe And have fun tonight", \
+                                        'following': [], 'web': ''},\
+                       'tomCruise': {'name': 'Tom Cruise', \
+                                      'location': 'Los Angeles, CA',\
+                                      'bio': 'Official TomCruise.com crew\
+                            tweets. We love you guys! \nVisit us at Facebook!',\
+                                      'following': \
+                                      ['katieH', 'NicoleKidman'], \
+                                      'web': \
+                                      'http://www.tomcruise.com'}}                                 
+        
+        searched_usernames = ['tomCruise', 'ZOYA', 'quin', 'xavy']
+        filter_dict =  {'name-includes': 'o'}
+        actual = tf.get_filter_results(twitter_dict, searched_usernames,
+                                       filter_dict)
+        expected = ['tomCruise','ZOYA',]       
+        self.assertEqual(actual, expected)   
+
+    def test_filter_full_name_operation(self):
+        """ Test get_filter_results with 'name-includes' filter
+        specification with a full name. """
+        
+        twitter_dict = {'katieH': {'name': 'Katie Holmes', 'bio': '', \
+                        'following': [], 'web': 'www.tomkat.com', \
+                        'location': ''}, \
+                       'xavy': {'name': 'Xavier', 'bio': '', 'following': ['ZOYA'], \
+                             'web': 'www.xerox.com', 'location': 'Xerox Parc'},\
+                       'quin': {'name': 'Quincy Q', 'bio': '', \
+                             'following': ['NicoleKidman'], \
+                             'web': 'http://www.something.com', \
+                             'location': 'Port Coquitlam, BC'}, \
+                       'ZOYA': {'name': 'Zoya Zorich', 'bio': '', \
+                             'following': ['tomfan', 'perty'], 'web': '', \
+                             'location': ''}, \
+                       'perty': {'name': 'Mme Clavell', \
+                             'bio': 'I love winter, snow and ice.', \
+                             'following': ['NicoleKidman'], \
+                             'web': '', 'location': 'Paris, France'}, \
+                       'tomfan': {'name': 'Chris Calderone', \
+                                  'bio':'Tom Cruise is the best actor in\
+                            Hollywood!', 'following': ['tomCruise'], \
+                                   'web': '', 'location': 'Houston, Texas'}, \
+                       'NicoleKidman': {'name': 'Nicole Kidman', \
+                                        'location': 'Oz', \
+                                        'bio': "At my house celebrating\
+                            Halloween! I Know Haven't been on like \nyears So\
+                            Sorry,Be safe And have fun tonight", \
+                                        'following': [], 'web': ''},\
+                       'tomCruise': {'name': 'Tom Cruise', \
+                                      'location': 'Los Angeles, CA',\
+                                      'bio': 'Official TomCruise.com crew\
+                            tweets. We love you guys! \nVisit us at Facebook!',\
+                                      'following': ['katieH', 'NicoleKidman'], \
+                                      'web': 'http://www.tomcruise.com'}}  
+        
+        searched_usernames = ['tomCruise', 'ZOYA', 'quin', 'xavy']
+        filter_dict =  {'name-includes': 'ZOYA'}
+        actual = tf.get_filter_results(twitter_dict, searched_usernames,
+                                       filter_dict)
+        expected = ['ZOYA']      
+        self.assertEqual(actual, expected)        
+        
+    def test_filter_no_name_operation(self):
+        """ Test get_filter_results with 'name-includes' filter
+        specification with users who have not provided a name. """
+        
+        twitter_dict = {'katieH': {'name': '', 'bio': '', \
+                        'following': [], 'web': 'www.tomkat.com', \
+                        'location': ''}, \
+                       'xavy': {'name': '', 'bio': '', 'following': ['ZOYA'], \
+                             'web': 'www.xerox.com', 'location': 'Xerox Parc'},\
+                       'quin': {'name': '', 'bio': '', \
+                             'following': ['NicoleKidman'], \
+                             'web': 'http://www.something.com', \
+                             'location': 'Port Coquitlam, BC'}, \
+                       'ZOYA': {'name': '', 'bio': '', \
+                             'following': ['tomfan', 'perty'], 'web': '', \
+                             'location': ''}, \
+                       'perty': {'name': '', \
+                             'bio': 'I love winter, snow and ice.', \
+                             'following': ['NicoleKidman'], \
+                             'web': '', 'location': 'Paris, France'}, \
+                       'tomfan': {'name': '', \
+                                  'bio':'Tom Cruise is the best actor in\
+                        Hollywood!', 'following': ['tomCruise'], \
+                                   'web': '', 'location': 'Houston, Texas'}, \
+                       'NicoleKidman': {'name': '', \
+                                        'location': 'Oz', \
+                                        'bio': "At my house celebrating\
+                            Halloween! I Know Haven't been on like \nyears So\
+                            Sorry,Be safe And have fun tonight", \
+                                        'following': [], 'web': ''},\
+                       'tomCruise': {'name': 'Tom Cruise', \
+                                      'location': 'Los Angeles, CA',\
+                                      'bio': 'Official TomCruise.com crew\
+                            tweets. We love you guys! \nVisit us at Facebook!',\
+                                      'following': ['katieH', 'NicoleKidman'], \
+                                      'web': 'http://www.tomcruise.com'}}  
+        
+        searched_usernames = ['tomCruise', 'ZOYA', 'quin', 'xavy']
+        filter_dict =  {'name-includes': 'ZOYA'}
+        actual = tf.get_filter_results(twitter_dict, searched_usernames,
+                                       filter_dict)
+        expected = []      
+        self.assertEqual(actual, expected)
+        
+    def test_filter_upper_case_location_operation(self):
+        """ Test get_filter_results with part of a location, in upper case, for 
+        the 'location-includes' filter specification. """
+        
+        twitter_dict = {'katieH': {'name': 'Katie Holmes', 'bio': '', \
+                        'following': [], 'web': 'www.tomkat.com', \
+                        'location': ''}, \
+                       'xavy': {'name': 'Xavier', 'bio': '', 'following': ['ZOYA'], \
+                             'web': 'www.xerox.com', 'location': 'Xerox Parc'},\
+                       'quin': {'name': 'Quincy Q', 'bio': '', \
+                             'following': ['NicoleKidman'], \
+                             'web': 'http://www.something.com', \
+                             'location': 'Port Coquitlam, BC'}, \
+                       'ZOYA': {'name': 'Zoya Zorich', 'bio': '', \
+                             'following': ['tomfan', 'perty'], 'web': '', \
+                             'location': 'Cannes, France'}, \
+                       'perty': {'name': 'Mme Clavell', \
+                             'bio': 'I love winter, snow and ice.', \
+                             'following': ['NicoleKidman'], \
+                             'web': '', 'location': 'Paris, France'}, \
+                       'tomfan': {'name': 'Chris Calderone', \
+                                  'bio':'Tom Cruise is the best actor in\
+                        Hollywood!', 'following': ['tomCruise'], \
+                                   'web': '', 'location': 'Houston, Texas'}, \
+                       'NicoleKidman': {'name': 'Nicole Kidman', \
+                                        'location': 'Oz', \
+                                        'bio': "At my house celebrating\
+                            Halloween! I Know Haven't been on like \nyears So\
+                            Sorry,Be safe And have fun tonight",\
+                                       'following': [], 'web': ''},\
+                       'tomCruise': {'name': 'Tom Cruise', \
+                                      'location': 'Los Angeles, CA',\
+                                      'bio': 'Official TomCruise.com crew\
+                            tweets. We love you guys! \nVisit us at Facebook!',\
+                                      'following': \
+                                      ['katieH', 'NicoleKidman'], \
+                                      'web': \
+                                      'http://www.tomcruise.com'}}                                 
+        
+        searched_usernames = ['tomCruise', 'ZOYA', 'quin', 'xavy', 'perty']
+        filter_dict =  {'location-includes': 'FRANCE'}
+        actual = tf.get_filter_results(twitter_dict, searched_usernames,
+                                       filter_dict)
+        expected = ['ZOYA', 'perty']
+        self.assertEqual(actual, expected)
+        
+    def test_filter_full_location_operation(self):
+        """ Test get_filter_results with a full location in the 
+        'location-includes' filter specification. """
+        
+        twitter_dict = {'katieH': {'name': 'Katie Holmes', 'bio': '', \
+                        'following': [], 'web': 'www.tomkat.com', \
+                        'location': ''}, \
+                       'xavy': {'name': 'Xavier', 'bio': '', 'following': ['ZOYA'], \
+                             'web': 'www.xerox.com', 'location': 'Xerox Parc'},\
+                       'quin': {'name': 'Quincy Q', 'bio': '', \
+                             'following': ['NicoleKidman'], \
+                             'web': 'http://www.something.com', \
+                             'location': 'Port Coquitlam, BC'}, \
+                       'ZOYA': {'name': 'Zoya Zorich', 'bio': '', \
+                             'following': ['tomfan', 'perty'], 'web': '', \
+                             'location': 'Cannes, France'}, \
+                       'perty': {'name': 'Mme Clavell', \
+                             'bio': 'I love winter, snow and ice.', \
+                             'following': ['NicoleKidman'], \
+                             'web': '', 'location': 'Paris, France'}, \
+                       'tomfan': {'name': 'Chris Calderone', \
+                                  'bio':'Tom Cruise is the best actor in\
+                            Hollywood!', 'following': ['tomCruise'], \
+                                   'web': '', 'location': 'Houston, Texas'}, \
+                       'NicoleKidman': {'name': 'Nicole Kidman', \
+                                        'location': 'Oz', 
+                                        'bio': "At my house celebrating\
+                            Halloween! I Know Haven't been on like \nyears So\
+                            Sorry,Be safe And have fun tonight", \
+                                        'following': [], 'web': ''},\
+                       'tomCruise': {'name': 'Tom Cruise', \
+                                      'location': 'Los Angeles, CA',\
+                                      'bio': 'Official TomCruise.com crew\
+                            tweets. We love you guys! \nVisit us at Facebook!',\
+                                      'following': \
+                                      ['katieH', 'NicoleKidman'], \
+                                      'web': \
+                                      'http://www.tomcruise.com'}}                                 
+        
+        searched_usernames = ['tomCruise', 'ZOYA', 'quin', 'xavy', 'perty']
+        filter_dict =  {'location-includes': 'Xerox Parc'}
+        actual = tf.get_filter_results(twitter_dict, searched_usernames,
+                                       filter_dict)
+        expected = ['xavy']
+        self.assertEqual(actual, expected)
+        
+    def test_filter_many_operations(self):
+        """ Test get_filter_results with more than one operations. """
+        
+        twitter_dict = {'katieH': {'name': 'Katie Holmes', 'bio': '', \
+                        'following': [], 'web': 'www.tomkat.com', \
+                        'location': ''}, \
+                       'xavy': {'name': 'Xavier', 'bio': '', \
+                             'following': ['ZOYA', 'katieH'], \
+                             'web': 'www.xerox.com', 'location': 'Xerox Parc'},\
+                       'quin': {'name': 'Quincy Q', 'bio': '', \
+                             'following': ['NicoleKidman'], \
+                             'web': 'http://www.something.com', \
+                             'location': 'Port Coquitlam, BC'}, \
+                       'ZOYA': {'name': 'Zoya Zorich', 'bio': '', \
+                             'following': ['tomfan', 'perty'], 'web': '', \
+                             'location': 'Cannes, France'}, \
+                       'perty': {'name': 'Mme Clavell', \
+                             'bio': 'I love winter, snow and ice.', \
+                             'following': ['NicoleKidman'], \
+                             'web': '', 'location': 'Paris, France'}, \
+                       'tomfan': {'name': 'Chris Calderone', \
+                                  'bio':'Tom Cruise is the best actor in' +
+                                  'Hollywood!', 'following': ['tomCruise'], \
+                                   'web': '', 'location': 'Houston, Texas'}, \
+                       'NicoleKidman': {'name': 'Nicole Kidman', \
+                                        'location': 'Oz', \
+                                        'bio': "At my house celebrating" + \
+                                        "Halloween! I Know Haven't been on" +\
+                                        "like \nyears So Sorry,Be safe And" +\
+                                        "have fun tonight",'following': [],
+                                        'web': ''},\
+                       'tomCruise': {'name': 'Tom Cruise', \
+                                      'location': 'Los Angeles, CA',\
+                                      'bio': 'Official' + \
+                                      'TomCruise.com crew tweets.' +\
+                                      'We love you guys! \nVisit' +\
+                                      'us at Facebook!', \
+                                      'following': \
+                                      ['katieH', 'NicoleKidman'], \
+                                      'web': \
+                                      'http://www.tomcruise.com'}}                                 
+        
+        searched_usernames = ['tomCruise', 'ZOYA', 'quin', 'xavy', 'perty']
+        filter_dict =  {'name-includes': 'u', 'following': 'katieH'}
+        actual = tf.get_filter_results(twitter_dict, searched_usernames,
+                                       filter_dict)
+        expected = ['tomCruise']        
+        self.assertEqual(actual, expected)
+
+    def test_filter_many_operations_reverse_order(self):
+        """ Test get_filter_results with more than one operations, in different
+        order. """
+        
+        twitter_dict = {'katieH': {'name': 'Katie Holmes', 'bio': '', \
+                        'following': [], 'web': 'www.tomkat.com', \
+                        'location': ''}, \
+                       'xavy': {'name': 'Xavier', 'bio': '', \
+                             'following': ['ZOYA', 'katieH'], \
+                             'web': 'www.xerox.com', 'location': 'Xerox Parc'},\
+                       'quin': {'name': 'Quincy Q', 'bio': '', \
+                             'following': ['NicoleKidman'], \
+                             'web': 'http://www.something.com', \
+                             'location': 'Port Coquitlam, BC'}, \
+                       'ZOYA': {'name': 'Zoya Zorich', 'bio': '', \
+                             'following': ['tomfan', 'perty'], 'web': '', \
+                             'location': 'Cannes, France'}, \
+                       'perty': {'name': 'Mme Clavell', \
+                             'bio': 'I love winter, snow and ice.', \
+                             'following': ['NicoleKidman'], \
+                             'web': '', 'location': 'Paris, France'}, \
+                       'tomfan': {'name': 'Chris Calderone', \
+                                  'bio':'Tom Cruise is the best actor in' +
+                                  'Hollywood!', 'following': ['tomCruise'], \
+                                   'web': '', 'location': 'Houston, Texas'}, \
+                       'NicoleKidman': {'name': 'Nicole Kidman', \
+                                        'location': 'Oz', \
+                                        'bio': "At my house celebrating" + \
+                                        "Halloween! I Know Haven't been on" +\
+                                        "like \nyears So Sorry,Be safe And" +\
+                                        "have fun tonight",'following': [],
+                                        'web': ''},\
+                       'tomCruise': {'name': 'Tom Cruise', \
+                                      'location': 'Los Angeles, CA',\
+                                      'bio': 'Official' + \
+                                      'TomCruise.com crew tweets.' +\
+                                      'We love you guys! \nVisit' +\
+                                      'us at Facebook!', \
+                                      'following': \
+                                      ['katieH', 'NicoleKidman'], \
+                                      'web': \
+                                      'http://www.tomcruise.com'}}                                 
+        
+        searched_usernames = ['tomCruise', 'ZOYA', 'quin', 'xavy', 'perty']
+        filter_dict =  {'following': 'katieH', 'name-includes': 'u'}
+        actual = tf.get_filter_results(twitter_dict, searched_usernames,
+                                       filter_dict)
+        expected = ['tomCruise']        
+        self.assertEqual(actual, expected)
+
+    def test_filter_all_operations(self):
+        """ Test get_filter_results with all four operations. """
+        
+        twitter_dict = {'katieH': {'name': 'Katie Holmes', 'bio': '', \
+                        'following': [], 'web': 'www.tomkat.com', \
+                        'location': ''}, \
+                       'xavy': {'name': 'Xavier', 'bio': '', 'following': ['ZOYA'], \
+                             'web': 'www.xerox.com', 'location': 'Xerox Parc'},\
+                       'quin': {'name': 'Quincy Q', 'bio': '', \
+                             'following': ['NicoleKidman'], \
+                             'web': 'http://www.something.com', \
+                             'location': 'Port Coquitlam, BC'}, \
+                       'ZOYA': {'name': 'Zoya Zorich', 'bio': '', \
+                             'following': ['tomfan', 'perty', 'tomCruise'],\
+                             'web': '', 'location': 'Cannes, France'}, \
+                       'perty': {'name': 'Mme Clavell', \
+                             'bio': 'I love winter, snow and ice.', \
+                             'following': ['NicoleKidman'], \
+                             'web': '', 'location': 'Paris, France'}, \
+                       'tomfan': {'name': 'Chris Calderone', \
+                                  'bio':'Tom Cruise is the best actor in' +
+                                  'Hollywood!', 'following': ['tomCruise'], \
+                                   'web': '', 'location': 'Houston, Texas'}, \
+                       'NicoleKidman': {'name': 'Nicole Kidman', \
+                                        'location': 'Oz', \
+                                        'bio': "At my house celebrating" + \
+                                        "Halloween! I Know Haven't been on" +\
+                                        "like \nyears So Sorry,Be safe And" +\
+                                        "have fun tonight",'following': [],
+                                        'web': ''},\
+                       'tomCruise': {'name': 'Tom Cruise', \
+                                      'location': 'Los Angeles, CA',\
+                                      'bio': 'Official' + \
+                                      'TomCruise.com crew tweets.' +\
+                                      'We love you guys! \nVisit' +\
+                                      'us at Facebook!', \
+                                      'following': \
+                                      ['katieH', 'NicoleKidman'], \
+                                      'web': \
+                                      'http://www.tomcruise.com'}}                                 
+        
+        searched_usernames = ['tomCruise', 'ZOYA', 'quin', 'xavy', 'perty', 'katieH', 'tomfan']
+        filter_dict =  {'name-includes': 'o', 'follower': 'ZOYA', 'location-includes': 'e', 'following': 'tomCruise'}
+        actual = tf.get_filter_results(twitter_dict, searched_usernames,
+                                       filter_dict)
+        expected = ['tomfan']        
+        self.assertEqual(actual, expected)
+        
+    def test_filter_unsatisfactory_operations(self):
+        """ Test get_filter_results with usernames that don't satisfy the filter
+        specification. """
+        
+        twitter_dict = {'katieH': {'name': 'Katie Holmes', 'bio': '', \
+                        'following': [], 'web': 'www.tomkat.com', \
+                        'location': ''}, \
+                       'xavy': {'name': 'Xavier', 'bio': '', 'following': ['ZOYA'], \
+                             'web': 'www.xerox.com', 'location': 'Xerox Parc'},\
+                       'quin': {'name': 'Quincy Q', 'bio': '', \
+                             'following': ['NicoleKidman'], \
+                             'web': 'http://www.something.com', \
+                             'location': 'Port Coquitlam, BC'}, \
+                       'ZOYA': {'name': 'Zoya Zorich', 'bio': '', \
+                             'following': ['tomfan', 'perty'], 'web': '', \
+                             'location': 'Cannes, France'}, \
+                       'perty': {'name': 'Mme Clavell', \
+                             'bio': 'I love winter, snow and ice.', \
+                             'following': ['NicoleKidman'], \
+                             'web': '', 'location': 'Paris, France'}, \
+                       'tomfan': {'name': 'Chris Calderone', \
+                                  'bio':'Tom Cruise is the best actor in\
+                            Hollywood!', 'following': ['tomCruise'], \
+                                   'web': '', 'location': 'Houston, Texas'}, \
+                       'NicoleKidman': {'name': 'Nicole Kidman', \
+                                        'location': 'Oz', \
+                                        'bio': "At my house celebrating\
+                            Halloween! I Know Haven't been on like \nyears So\
+                            Sorry,Be safe And have fun tonight", \
+                                        'following': [], 'web': ''},\
+                       'tomCruise': {'name': 'Tom Cruise', \
+                                      'location': 'Los Angeles, CA',\
+                                      'bio': 'Official TomCruise.com crew\
+                            tweets. We love you guys! \nVisit us at Facebook!',\
+                                      'following': ['katieH', 'NicoleKidman'], \
+                                      'web': 'http://www.tomcruise.com'}}                                 
+        
+        searched_usernames = ['tomCruise', 'ZOYA', 'quin', 'xavy', 'perty']
+        filter_dict =  {'name-includes': 'u', 'following': 'katieH', \
+                        'location-includes': 'MD'}
+        actual = tf.get_filter_results(twitter_dict, searched_usernames,
+                                       filter_dict)
+        expected = []        
+        self.assertEqual(actual, expected)
+        
+    def test_filter_nonexistent_user(self):
+        """ Test get_filter_results with usernames that don't satisfy the filter
+        specification. """
+        
+        twitter_dict = {'katieH': {'name': 'Katie Holmes', 'bio': '', \
+                        'following': [], 'web': 'www.tomkat.com', \
+                        'location': ''}, \
+                       'xavy': {'name': 'Xavier', 'bio': '', 'following': ['ZOYA'], \
+                             'web': 'www.xerox.com', 'location': 'Xerox Parc'},\
+                       'quin': {'name': 'Quincy Q', 'bio': '', \
+                             'following': ['NicoleKidman'], \
+                             'web': 'http://www.something.com', \
+                             'location': 'Port Coquitlam, BC'}, \
+                       'ZOYA': {'name': 'Zoya Zorich', 'bio': '', \
+                             'following': ['tomfan', 'perty'], 'web': '', \
+                             'location': 'Cannes, France'}, \
+                       'perty': {'name': 'Mme Clavell', \
+                             'bio': 'I love winter, snow and ice.', \
+                             'following': ['NicoleKidman'], \
+                             'web': '', 'location': 'Paris, France'}, \
+                       'tomfan': {'name': 'Chris Calderone', \
+                                  'bio':'Tom Cruise is the best actor in\
+                           Hollywood!', 'following': ['tomCruise'], \
+                                   'web': '', 'location': 'Houston, Texas'}, \
+                       'NicoleKidman': {'name': 'Nicole Kidman', \
+                                        'location': 'Oz', \
+                                        'bio': "At my house celebrating\
+                            Halloween! I Know Haven't been on like \nyears So\
+                            Sorry,Be safe And have fun tonight",\
+                                        'following': [], 'web': ''},\
+                       'tomCruise': {'name': 'Tom Cruise', \
+                                      'location': 'Los Angeles, CA',\
+                                      'bio': 'Official TomCruise.com crew\
+                            tweets. We love you guys! \nVisit us at Facebook!',\
+                                      'following': ['katieH', 'NicoleKidman'], \
+                                      'web': 'http://www.tomcruise.com'}}                                 
+        
+        searched_usernames = ['tomCruise', 'ZOYA', 'quin', 'xavy', 'perty']
+        filter_dict =  {'follower': 'notHere', 'following': 'nonexistent'}
+        actual = tf.get_filter_results(twitter_dict, searched_usernames,
+                                       filter_dict)
+        expected = []        
+        self.assertEqual(actual, expected)
+
+
+if __name__ == '__main__':
+    unittest.main(exit=False)
